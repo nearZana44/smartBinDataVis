@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin1 DashInfo</title>
+    <link rel="stylesheet" href="binStyle.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script src="add google maps api key here" async defer></script>
+</head>
+<body>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #1f2937;
+        color: white;
+        font-family: Arial, sans-serif;
+    }
+
+    #container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+        background-color: #1f2937;
+    }
+
+    #content {
+        display: flex;
+        flex: 1;
+        padding: 20px;
+    }
+
+    #map {
+        flex: 3;
+        height: 100%;
+        background-color: #1f2937;
+        border-radius: 8px;
+        margin-right: 20px;
+    }
+
+    .right-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .responsive-box {
+        background-color: rgb(66, 64, 64);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .table-box {
+        flex: 1;
+        background-color: rgb(66, 64, 64);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid white;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #333;
+    }
+
+    button.delete-button {
+        padding: 5px 10px;
+        background-color: #FF4136;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    button.delete-button:hover {
+        background-color: #FF0000;
+    }
+
+    button.back-button {
+        padding: 10px 20px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    button.back-button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 600px) {
+        #content {
+            flex-direction: column;
+        }
+
+        #map {
+            margin-right: 0;
+            margin-bottom: 20px;
+        }
+    }
+</style>
+
+<div id="container">
+    <div id="content">
+        <div id="map"></div>
+        <div class="right-panel">
+            <div class="responsive-box">
+                <h2>Current Bin</h2>
+                <h1>Bin 1</h1>
+                <button class="back-button" onclick="location.href='signout.html'">Back</button>
+            </div>
+            <div class="table-box">
+                <h2>Pickup Days Schedule</h2>
+                <table id="pickupDaysTable">
+                    <thead>
+                        <tr>
+                            <th>Bin ID</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Pickup Days</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "ADD API KEY HERE",
+        authDomain: "",
+        databaseURL: "ADD DATABASE URL HERE",
+        projectId: "",
+        storageBucket: " ",
+        messagingSenderId: "",
+        appId: "ADD APP ID HERE"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Initialize the map
+    function initMap() {
+        const map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: 3.0724134743518556, lng: 101.49984472126465 }, // Default center if data is not yet loaded
+            zoom: 19
+        });
+
+        // Get a reference to the database service
+        const database = firebase.database();
+        
+        // Reference to the GPS data in Firebase
+        const gpsRef = database.ref('bin1/gps');
+        const dataRef2 = database.ref('bin1/Status/active');
+
+        dataRef2.on('value', function(getdata2){
+            const isActive = getdata2.val();
+            const statusText = isActive ? "Active" : "Inactive";
+            document.getElementById('active').innerHTML = statusText;
+        });
+        
+        // Fetch the GPS data from Firebase
+        gpsRef.once('value', (snapshot) => {
+            const gpsData = snapshot.val();
+            if (gpsData) {
+                const latitude = gpsData.latitude;
+                const longitude = gpsData.longitude;
+
+                // Set the center of the map to the retrieved location
+                map.setCenter({ lat: latitude, lng: longitude });
+
+                // Add a marker at the retrieved location
+                const marker = new google.maps.Marker({
+                    position: { lat: latitude, lng: longitude },
+                    map: map,
+                    title: 'MY LOCATION'
+                });
+
+                // Create an InfoWindow
+                const infoWindow = new google.maps.InfoWindow({
+                    content: 'BIN1'
+                });
+
+                // Add a click listener to the marker to open the InfoWindow
+                marker.addListener('click', () => {
+                    infoWindow.open({
+                        anchor: marker,
+                        map,
+                        shouldFocus: false,
+                    });
+                });
+            } else {
+                console.log("No GPS data found in Firebase.");
+            }
+        });
+    }
+
+    // Load data from Firestore and populate the table
+    function loadData() {
+        db.collection('bins').orderBy('createdAt', 'desc').get().then((querySnapshot) => {
+            const tableBody = document.querySelector('#pickupDaysTable tbody');
+            tableBody.innerHTML = '';
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const row = document.createElement('tr');
+
+                const binIDCell = document.createElement('td');
+                binIDCell.textContent = data.binID;
+                row.appendChild(binIDCell);
+
+                const statusCell = document.createElement('td');
+                statusCell.textContent = data.status;
+                row.appendChild(statusCell);
+
+                const locationCell = document.createElement('td');
+                locationCell.textContent = data.location;
+                row.appendChild(locationCell);
+
+                const pickupDaysCell = document.createElement('td');
+                pickupDaysCell.textContent = data.pickupDays.join(', ');
+                row.appendChild(pickupDaysCell);
+
+                const actionCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.classList.add('delete-button');
+                deleteButton.onclick = () => deleteRow(doc.id);
+                actionCell.appendChild(deleteButton);
+                row.appendChild(actionCell);
+
+                tableBody.appendChild(row);
+            });
+        });
+    }
+
+    // Delete row from Firestore and table
+    function deleteRow(docId) {
+        db.collection('bins').doc(docId).delete().then(() => {
+            loadData(); // Reload data to refresh the table
+            alert('Document successfully deleted!');
+        }).catch((error) => {
+            console.error('Error removing document: ', error);
+        });
+    }
+
+    // Initial load
+    loadData();
+
+    // Reload data every minute
+    setInterval(loadData, 60000);
+</script>
+</body>
+</html>

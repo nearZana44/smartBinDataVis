@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+ 
+  <link rel="stylesheet" href="signoutStyle.css">
+  <link rel="stylesheet" href="Style.css">
+
+  <title>DashBoard SmartBin</title>
+
+  <style>
+    .center-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    #signoutbtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <a href="signout.html"><i class="fa fa-fw fa-home"></i> Home</a>
+    <a href="forms.html"><i class="fa fa-fw fa-wrench"></i> Forms</a>
+    <a href="signOff.html"><i class="fa fa-fw fa-user"></i> sign out</a>
+  </div>
+
+  <div class="center-container">
+    <p>Do you want to sign out?</p>
+    <input type="button" id="signoutbtn" value="Sign Out" onclick="confirmSignOut()">
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="page1.js" type="module"></script>
+
+</body>
+</html>

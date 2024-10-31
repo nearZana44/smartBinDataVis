@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin and Pick Up Schedule</title>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #76c7c0;
+            color: #333;
+        }
+
+        #container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #555;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        fieldset {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        legend {
+            padding: 0 10px;
+            font-weight: bold;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #currentDate {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+
+        #backButton {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        #backButton:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div>
+            <p id="currentDate"></p>
+        </div>
+        <h2>Bin and Pick Up Schedule</h2>
+        <form id="binForm">
+            <label for="binID">Bin ID :</label>
+            <input type="text" id="binID" name="binID">
+            <br>
+
+            <label for="status">Status:</label>
+            <select id="status" name="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+            <br>
+
+            <label for="location">Location:</label>
+            <input type="text" id="location" name="location">
+            <br>
+
+            <fieldset>
+                <legend>Pickup Days:</legend>
+                <label><input type="checkbox" name="pickupDays" value="Monday"> Monday</label><br>
+                <label><input type="checkbox" name="pickupDays" value="Tuesday"> Tuesday</label><br>
+                <label><input type="checkbox" name="pickupDays" value="Wednesday"> Wednesday</label><br>
+                <label><input type="checkbox" name="pickupDays" value="Thursday"> Thursday</label><br>
+                <label><input type="checkbox" name="pickupDays" value="Friday"> Friday</label><br>
+                <label><input type="checkbox" name="pickupDays" value="Saturday"> Saturday</label><br>
+                <label><input type="checkbox" name="pickupDays" value="Sunday"> Sunday</label><br>
+            </fieldset>
+            <br>
+
+            <button type="submit">Submit</button>
+        </form>
+        <a href="signout.html" id="backButton">Back</a>
+    </div>
+
+    <script>
+        var currentDate = new Date();
+        var options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        var formattedDate = currentDate.toLocaleDateString('en-GB', options);
+        document.getElementById("currentDate").textContent = formattedDate;
+
+            // Firebase configuration
+        const firebaseConfig = {
+        apiKey: "ADD API KEY HERE",
+        authDomain: "",
+        databaseURL: "ADD DATABASE URL HERE",
+        projectId: "",
+        storageBucket: " ",
+        messagingSenderId: "",
+        appId: "ADD APP ID HERE"
+    };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Handle form submission
+        document.getElementById('binForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const binID = document.getElementById('binID').value;
+            const status = document.getElementById('status').value;
+            const location = document.getElementById('location').value;
+            const pickupDays = Array.from(document.querySelectorAll('input[name="pickupDays"]:checked')).map(el => el.value);
+
+            // Check if the binID exists
+            db.collection('bins').where('binID', '==', binID).get().then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    // If the binID does not exist, create a new document
+                    db.collection('bins').add({
+                        binID: binID,
+                        status: status,
+                        location: location,
+                        pickupDays: pickupDays,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                    .then(() => {
+                        alert('Data successfully submitted!');
+                    })
+                    .catch((error) => {
+                        console.error('Error writing document: ', error);
+                    });
+                } else {
+                    // If the binID exists, update the existing document
+                    querySnapshot.forEach((doc) => {
+                        doc.ref.update({
+                            status: status,
+                            location: location,
+                            pickupDays: pickupDays,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        })
+                        .then(() => {
+                            alert('Data successfully updated!');
+                        })
+                        .catch((error) => {
+                            console.error('Error updating document: ', error);
+                        });
+                    });
+                }
+            }).catch((error) => {
+                console.error('Error getting documents: ', error);
+            });
+        });
+    </script>
+</body>
+</html>

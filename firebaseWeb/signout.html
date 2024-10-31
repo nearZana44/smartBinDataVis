@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+  <link rel="stylesheet" href="signoutStyle.css">
+  <link rel="stylesheet" href="Style.css">
+  <title>DashBoard SmartBin</title>
+  <style>
+    .progressBox {
+        width: 100%;
+        background-color: #e0e0e0;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+    }
+    .progressBar {
+        width: 0;
+        height: 30px;
+        background-color: #76c7c0;
+        text-align: center;
+        line-height: 30px;
+        color: white;
+        border-radius: 5px;
+    }
+    .locationButton {
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <a href="signout.html"><i class="fa fa-fw fa-home"></i> Home</a>
+    <a href="forms.html"><i class="fa fa-fw fa-wrench"></i> Forms</a>
+    <a href="signOff.html"><i class="fa fa-fw fa-user"></i> sign out</a>
+  </div>
+  
+  <div class="widget-container">
+    <div class="widget-content">
+      <h1>Smart bin</h1>
+      <div class="progressBox">
+        <h3>Bin 1</h3>
+        <div id="progressContainer1">
+          <div id="progressBar1" class="progressBar">0%</div>
+        </div>
+        <button class="locationButton" onclick="openNewPage('bin1')">View Bin 1 Details</button>
+      </div>
+      <div class="progressBox">
+        <h3>Bin 2</h3>
+        <div id="progressContainer2">
+          <div id="progressBar2" class="progressBar">0%</div>
+        </div>
+        <button class="locationButton" onclick="openNewPage('bin2')">View Bin 2 Details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js"></script>
+
+  <!-- Main script -->
+  <script type="module">
+    import { firebaseConfig } from './config.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+    import { convertToPercentage } from './sensorProgressBar.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Function to update progress bar
+    function updateProgressBar(progressBarId, percentage) {
+        const progressBar = document.getElementById(progressBarId);
+        progressBar.style.width = percentage + '%';
+        progressBar.textContent = percentage + '%';
+    }
+
+    // Listen to Firebase changes for bin1
+    const bin1Ref = ref(database, 'bin1/Sensor/LevelWater');
+    onValue(bin1Ref, (snapshot) => {
+        const levelWater = snapshot.val();
+        if (levelWater != null) {
+            const percentage = convertToPercentage(levelWater);
+            updateProgressBar('progressBar1', percentage);
+        }
+    });
+
+    // Listen to Firebase changes for bin2
+    const bin2Ref = ref(database, 'bin2/Sensor/LevelWater');
+    onValue(bin2Ref, (snapshot) => {
+        const levelWater = snapshot.val();
+        if (levelWater != null) {
+            const percentage = convertToPercentage(levelWater);
+            updateProgressBar('progressBar2', percentage);
+        }
+    });
+
+    // Function to open a new page
+    window.openNewPage = function(bin) {
+        const url = `${bin}_details.html`; // Assuming you have separate detail pages for each bin
+        window.location.href = url;
+    }
+  </script>
+</body>
+</html>
